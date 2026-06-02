@@ -39,6 +39,75 @@ An interactive Streamlit dashboard analyzing the discography of the band Death.
 - Pandas
 - Streamlit
 - Plotly
+# Death Discography Dashboard
+
+## Project Summary
+
+Built an interactive analytics dashboard exploring the complete studio discography of the band Death. The project combines music metadata, popularity metrics, and musical characteristics to allow fans to explore albums and tracks through an interactive web application.
+
+## Business Problem
+
+Music data is distributed across multiple platforms and difficult to analyse collectively. The objective was to consolidate multiple music datasets into a single analytical platform that allows users to compare albums, tracks, popularity, and musical characteristics.
+
+## Data Sources
+
+- Spotify API
+- Last.fm API
+- MusicBrainz
+- AcousticBrainz
+
+## Data Engineering
+
+### Extraction
+
+Collected album and track information from MusicBrainz and enriched records using Last.fm and Spotify-based sources.
+
+### Transformation
+
+- Removed duplicate tracks
+- Filtered non-studio releases
+- Standardised popularity metrics
+- Joined datasets from multiple APIs
+
+### Loading
+
+Created a consolidated dataset used by Streamlit and Plotly visualisations.
+
+## Technologies
+
+- Python
+- Pandas
+- Streamlit
+- Plotly
+
+## Dashboard Features
+
+- Album exploration
+- Track-level analysis
+- BPM analysis
+- Listener trends
+- Popularity comparison
+
+## Key Challenges
+
+- Matching tracks across APIs
+- Inconsistent naming conventions
+- Missing BPM information
+
+## Results
+
+- Interactive web application deployed publicly
+- Unified music dataset
+- Track-level and album-level analytics
+
+## Skills Demonstrated
+
+- API Integration
+- Data Cleaning
+- ETL Pipelines
+- Dashboard Development
+- Data Visualisation
+- Python Development
 
 ## Run Locally
 
