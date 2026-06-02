@@ -1,6 +1,32 @@
 # 📊 Big Four Thrash Metal Analysis — Technical Report
 
 ---
+## Project Summary
+
+Built an end-to-end analytics platform comparing the Big Four thrash metal bands through music metadata, popularity metrics, and tempo analysis.
+
+## Business Problem
+
+Fans can easily compare songs but lack a unified view of how the bands evolved over time and how their audiences behave.
+
+## Key Findings
+
+- Metallica dominates audience reach and total playcount.
+- BPM varies significantly across bands and albums.
+- Popularity is concentrated in a small subset of tracks.
+- Listener behaviour differs considerably despite the bands sharing the same genre.
+
+## Skills Demonstrated
+
+- API Integration
+- ETL Design
+- Data Modelling
+- Feature Engineering
+- Dashboard Development
+- Streamlit
+- Data Storytelling
+ 
+---
 
 ## 1. Introduction
 
