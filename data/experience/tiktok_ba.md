@@ -1,4 +1,4 @@
-# QA Project Manager
+# Business Analyst - Project Manager
 
 ## Company
 
@@ -14,7 +14,7 @@ March 2024 – Present
 
 ## Overview
 
-Manage quality operations across six European markets, using analytics, automation, machine learning, and process improvement initiatives to improve operational performance and decision-making.
+Manage quality operations and business analysis across eight European markets, using analytics, automation, machine learning, and process improvement initiatives to improve operational performance and decision-making. Those markets were: UK, IE, ES, DE, FR, IT, BE, PL, NL.
 
 ## Key Responsibilities
 
