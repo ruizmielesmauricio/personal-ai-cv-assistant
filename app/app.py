@@ -1,8 +1,5 @@
 import streamlit as st
-from dotenv import load_dotenv
 from rag_pipeline import build_vector_database, generate_answer
-
-load_dotenv()
 
 st.set_page_config(
     page_title="Mauricio AI CV Assistant",
@@ -23,7 +20,7 @@ if st.button("Build / Refresh Knowledge Base"):
 question = st.text_input("Ask a question")
 
 if question:
-    with st.spinner("Thinking..."):
+    with st.spinner("Searching knowledge base and generating answer..."):
         answer, sources = generate_answer(question)
 
     st.subheader("Answer")
