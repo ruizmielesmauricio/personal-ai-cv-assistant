@@ -1,22 +1,20 @@
-import os
 from pathlib import Path
+import requests
 import chromadb
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from sentence_transformers import SentenceTransformer
 
 DATA_DIR = "data"
 DB_DIR = "chroma_db"
 COLLECTION_NAME = "mauricio_knowledge_base"
 
+embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
-def load_markdown_files(data_dir=DATA_DIR):
+
+def load_markdown_files():
     documents = []
 
-    for file_path in Path(data_dir).rglob("*.md"):
-        with open(file_path, "r", encoding="utf-8") as file:
-            text = file.read()
-
+    for file_path in Path(DATA_DIR).rglob("*.md"):
+        text = file_path.read_text(encoding="utf-8")
         documents.append({
             "text": text,
             "source": str(file_path)
@@ -38,21 +36,18 @@ def chunk_text(text, chunk_size=900, overlap=150):
 
 
 def get_embedding(text):
-    response = client.embeddings.create(
-        model="text-embedding-3-small",
-        input=text
-    )
-    return response.data[0].embedding
+    return embedding_model.encode(text).tolist()
 
 
 def build_vector_database():
     chroma_client = chromadb.PersistentClient(path=DB_DIR)
 
-    collection = chroma_client.get_or_create_collection(
-        name=COLLECTION_NAME
-    )
+    try:
+        chroma_client.delete_collection(COLLECTION_NAME)
+    except Exception:
+        pass
 
-    documents = load_markdown_files()
+    collection = chroma_client.create_collection(COLLECTION_NAME)
 
     ids = []
     texts = []
@@ -61,10 +56,8 @@ def build_vector_database():
 
     counter = 0
 
-    for doc in documents:
-        chunks = chunk_text(doc["text"])
-
-        for chunk in chunks:
+    for doc in load_markdown_files():
+        for chunk in chunk_text(doc["text"]):
             ids.append(f"chunk_{counter}")
             texts.append(chunk)
             metadatas.append({"source": doc["source"]})
@@ -78,15 +71,12 @@ def build_vector_database():
         embeddings=embeddings
     )
 
-    return f"Vector database created with {counter} chunks."
+    return f"Knowledge base created with {counter} chunks."
 
 
 def search_knowledge_base(question, n_results=5):
     chroma_client = chromadb.PersistentClient(path=DB_DIR)
-
-    collection = chroma_client.get_or_create_collection(
-        name=COLLECTION_NAME
-    )
+    collection = chroma_client.get_collection(COLLECTION_NAME)
 
     question_embedding = get_embedding(question)
 
@@ -98,36 +88,45 @@ def search_knowledge_base(question, n_results=5):
     return results
 
 
+def call_ollama(prompt):
+    response = requests.post(
+        "http://localhost:11434/api/generate",
+        json={
+            "model": "llama3.1:8b",
+            "prompt": prompt,
+            "stream": False
+        }
+    )
+
+    response.raise_for_status()
+    return response.json()["response"]
+
+
 def generate_answer(question):
     results = search_knowledge_base(question)
 
-    retrieved_chunks = results["documents"][0]
+    chunks = results["documents"][0]
     sources = results["metadatas"][0]
 
-    context = "\n\n".join(retrieved_chunks)
+    context = "\n\n".join(chunks)
 
     prompt = f"""
-You are Mauricio Ruiz's AI career assistant.
+You are Mauricio Ruiz's AI CV and portfolio assistant.
 
-Answer the user's question using only the provided context.
-If the answer is not in the context, say that the information is not available.
+Answer the question using only the context below.
+Do not invent information.
+If the context does not contain the answer, say:
+"I don't have enough information in the knowledge base to answer that."
 
 Context:
 {context}
 
 Question:
 {question}
+
+Answer:
 """
 
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful AI assistant for Mauricio's CV and portfolio."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-    )
-
-    answer = response.choices[0].message.content
+    answer = call_ollama(prompt)
 
     return answer, sources
