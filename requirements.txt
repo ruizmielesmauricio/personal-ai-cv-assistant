@@ -1,4 +1,4 @@
 streamlit
-openai
 chromadb
-python-dotenv
+sentence-transformers
+google-genai
