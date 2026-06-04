@@ -14,12 +14,7 @@ sys.path.append(str(ROOT_DIR))
 import streamlit as st
 from src.rag_pipeline import build_vector_database, generate_answer
 
-try:
-    import pysqlite3
-    sys.modules["sqlite3"] = pysqlite3
-except ImportError:
-    pass
-    
+
 st.set_page_config(
     page_title="Mauricio AI CV Assistant",
     layout="wide"
