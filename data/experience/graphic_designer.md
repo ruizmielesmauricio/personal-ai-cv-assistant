@@ -20,7 +20,12 @@ Responsible for creating corporate images, banners, animations and webdesign as 
 
 
 ## Technologies & Tools
-Adobe Suite
-HTML
-CSS
-3D Blender
+* Adobe Suite
+* HTML
+* CSS
+* 3D Blender
+
+## Skills demonstrated
+* Deep understanding of User Experience
+* Implementation of useful User Interface
+* Visually engaging graphics
