@@ -1,6 +1,5 @@
-streamlit==1.40.2
-chromadb==0.5.23
-sentence-transformers==3.3.1
-google-genai==0.8.0
-protobuf==3.20.3
+streamlit
+chromadb
+google-genai
 pysqlite3-binary
+protobuf==3.20.3
