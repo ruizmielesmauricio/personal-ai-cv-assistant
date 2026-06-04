@@ -1,5 +1,12 @@
+import sys
+from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT_DIR))
+
 import streamlit as st
-from rag_pipeline import build_vector_database, generate_answer
+from src.rag_pipeline import build_vector_database, generate_answer
+
 
 st.set_page_config(
     page_title="Mauricio AI CV Assistant",
@@ -12,20 +19,91 @@ st.write(
     "Ask questions about my experience, skills, projects, education, and portfolio."
 )
 
-if st.button("Build / Refresh Knowledge Base"):
-    with st.spinner("Building knowledge base..."):
-        message = build_vector_database()
-        st.success(message)
+if "db_built" not in st.session_state:
+    with st.spinner("Preparing knowledge base..."):
+        build_vector_database()
+        st.session_state["db_built"] = True
 
-question = st.text_input("Ask a question")
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-if question:
-    with st.spinner("Searching knowledge base and generating answer..."):
-        answer, sources = generate_answer(question)
+tab1, tab2 = st.tabs([
+    "Portfolio Assistant",
+    "Job Description Analyzer"
+])
 
-    st.subheader("Answer")
-    st.write(answer)
+with tab1:
+    st.subheader("Ask my AI Portfolio Assistant")
 
-    st.subheader("Sources Used")
-    for source in sources:
-        st.write(source["source"])
+    suggested_questions = [
+        "What machine learning projects has Mauricio completed?",
+        "Summarise Mauricio's experience as a Data Analyst.",
+        "Which projects demonstrate Python skills?",
+        "What experience does Mauricio have in machine learning?"
+    ]
+
+    cols = st.columns(2)
+
+    selected_question = None
+
+    for i, suggested_question in enumerate(suggested_questions):
+        with cols[i % 2]:
+            if st.button(suggested_question):
+                selected_question = suggested_question
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+
+    typed_question = st.chat_input(
+        "Ask me about my experience, projects, or skills"
+    )
+
+    question = selected_question or typed_question
+
+    if question:
+        st.session_state.messages.append({
+            "role": "user",
+            "content": question
+        })
+
+        with st.chat_message("user"):
+            st.write(question)
+
+        with st.spinner("Searching knowledge base and generating answer..."):
+            answer, sources = generate_answer(question)
+
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": answer
+        })
+
+        with st.chat_message("assistant"):
+            st.write(answer)
+
+with tab2:
+    st.subheader("Job Description Analyzer")
+
+    st.write("Paste a job description here. This feature will analyse how well Mauricio's experience matches the role.")
+
+    job_description = st.text_area(
+        "Paste job description",
+        height=250
+    )
+
+    if st.button("Analyze Job Description"):
+        if job_description.strip():
+            prompt = f"""
+            Compare Mauricio's portfolio knowledge base against this job description.
+            Identify relevant skills, matching projects, missing keywords, and suggested CV improvements.
+
+            Job description:
+            {job_description}
+            """
+
+            with st.spinner("Analysing job description..."):
+                answer, sources = generate_answer(prompt)
+
+            st.write(answer)
+        else:
+            st.warning("Please paste a job description first.")
