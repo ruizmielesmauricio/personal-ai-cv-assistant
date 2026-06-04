@@ -29,17 +29,6 @@ responsible for supporting kitchen operations, food preparation, team supervisio
 * Assist in cost control initiatives, including food cost monitoring and labor optimization.
 * Collaborate with front-of-house teams to ensure excellent customer experiences.
 
-## Major Achievements
-
-### Moderation Error Forecasting System
-
-Developed a machine learning system using Python and XGBoost to predict future moderation risks, including Leakage and Overkill errors.
-
-Business Impact:
-
-* Enabled proactive training interventions.
-* Reduced reliance on manual trend analysis.
-* Improved visibility of high-risk labels before KPI impact occurred.
 
 ## Major Achievements
 
