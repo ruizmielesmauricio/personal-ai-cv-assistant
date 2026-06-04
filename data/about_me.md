@@ -19,3 +19,7 @@ Currently working as a Business Analyst in TikTok managing Business Intelligence
 ## Career Goals
 
 Transition into Data Analytics, Analytics Engineering, Machine Learning, or Business Intelligence roles while continuing to build real-world AI and data products.
+
+## All the information about my projects
+If you are interested on reading all my portfolio you can check 
+https://ruizmielesmauricio.github.io/mauricio-s_portfolio/
