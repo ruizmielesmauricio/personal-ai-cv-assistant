@@ -106,7 +106,7 @@ def generate_answer(question):
 
     context = "\n\n".join(chunks)
 
-    prompt = prompt = f"""
+    prompt = f"""
 You are Mauricio Ruiz's AI CV and portfolio assistant.
 
 Your job is to answer like a strong career portfolio assistant.
