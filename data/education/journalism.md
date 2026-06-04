@@ -25,3 +25,7 @@ Second Class Honours
 - Writing
 - Economical Analysis
 - Research
+- Communication
+- Guiding complex conversations to extract meaningful insight
+- Expertly leading interviews to uncover key stories
+- Transforming raw data into compelling news
