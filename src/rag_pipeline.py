@@ -3,14 +3,12 @@ from pathlib import Path
 import chromadb
 import streamlit as st
 from google import genai
-from sentence_transformers import SentenceTransformer
 
 
 DATA_DIR = "data"
 DB_DIR = "chroma_db"
 COLLECTION_NAME = "mauricio_knowledge_base"
 
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
@@ -41,8 +39,11 @@ def chunk_text(text, chunk_size=1400, overlap=250):
 
 
 def get_embedding(text):
-    return embedding_model.encode(text).tolist()
-
+    response = gemini_client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=text
+    )
+    return response.embeddings[0].values
 
 def build_vector_database():
     chroma_client = chromadb.PersistentClient(path=DB_DIR)
