@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 try:
     import pysqlite3
@@ -6,14 +7,16 @@ try:
 except ImportError:
     pass
 
-from pathlib import Path
-
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT_DIR))
 
 import streamlit as st
-from src.rag_pipeline import build_vector_database, generate_answer
 
+from src.rag_pipeline import (
+    build_vector_database,
+    database_needs_rebuild,
+    generate_answer
+)
 
 st.set_page_config(
     page_title="Mauricio AI CV Assistant",
@@ -26,10 +29,10 @@ st.write(
     "Ask questions about my experience, skills, projects, education, and portfolio."
 )
 
-if "db_built" not in st.session_state:
-    with st.spinner("Preparing knowledge base..."):
-        build_vector_database()
-        st.session_state["db_built"] = True
+if database_needs_rebuild():
+    with st.spinner("Updating knowledge base..."):
+        message = build_vector_database()
+        st.success(message)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -50,7 +53,6 @@ with tab1:
     ]
 
     cols = st.columns(2)
-
     selected_question = None
 
     for i, suggested_question in enumerate(suggested_questions):
@@ -91,7 +93,9 @@ with tab1:
 with tab2:
     st.subheader("Job Description Analyzer")
 
-    st.write("Paste a job description here. This feature will analyse how well Mauricio's experience matches the role.")
+    st.write(
+        "Paste a job description here. This feature will analyse how well Mauricio's experience matches the role."
+    )
 
     job_description = st.text_area(
         "Paste job description",
@@ -101,12 +105,12 @@ with tab2:
     if st.button("Analyze Job Description"):
         if job_description.strip():
             prompt = f"""
-            Compare Mauricio's portfolio knowledge base against this job description.
-            Identify relevant skills, matching projects, missing keywords, and suggested CV improvements.
+Compare Mauricio's portfolio knowledge base against this job description.
+Identify relevant skills, matching projects, missing keywords, and suggested CV improvements.
 
-            Job description:
-            {job_description}
-            """
+Job description:
+{job_description}
+"""
 
             with st.spinner("Analysing job description..."):
                 answer, sources = generate_answer(prompt)
