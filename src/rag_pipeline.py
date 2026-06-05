@@ -72,11 +72,17 @@ def chunk_text(text, chunk_size=1400, overlap=250):
 
 
 def get_embedding(text):
-    response = gemini_client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=text
-    )
-    return response.embeddings[0].values
+    try:
+        response = gemini_client.models.embed_content(
+            model="gemini-embedding-001",
+            contents=text
+        )
+
+        return response.embeddings[0].values
+
+    except Exception as e:
+        st.error(f"Embedding error: {e}")
+        raise
 
 def build_vector_database():
     chroma_client = chromadb.PersistentClient(path=DB_DIR)
