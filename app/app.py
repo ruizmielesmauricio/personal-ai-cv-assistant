@@ -1,3 +1,7 @@
+from src.rag_pipeline import test_gemini
+
+st.write(test_gemini())
+
 import sys
 from pathlib import Path
 
