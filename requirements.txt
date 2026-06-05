@@ -3,3 +3,5 @@ chromadb
 google-genai
 pysqlite3-binary
 protobuf==3.20.3
+sentence-transformers
+torch
