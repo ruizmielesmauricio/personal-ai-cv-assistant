@@ -4,25 +4,38 @@ import os
 from pathlib import Path
 
 import chromadb
-import streamlit as st
 from google import genai
-
 
 
 DATA_DIR = "data"
 DB_DIR = "chroma_db"
 COLLECTION_NAME = "mauricio_knowledge_base"
-
-
-gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-
 HASH_FILE = "chroma_db/content_hash.json"
+
+
+def get_api_key():
+    try:
+        import streamlit as st
+        return st.secrets["GEMINI_API_KEY"]
+    except Exception:
+        return os.getenv("GEMINI_API_KEY")
+
+
+api_key = get_api_key()
+
+if not api_key:
+    raise ValueError(
+        "GEMINI_API_KEY not found. Add it to Streamlit secrets or as an environment variable."
+    )
+
+gemini_client = genai.Client(api_key=api_key)
 
 
 def calculate_content_hash():
     combined_text = ""
 
     for file_path in sorted(Path(DATA_DIR).rglob("*.md")):
+        combined_text += str(file_path)
         combined_text += file_path.read_text(encoding="utf-8")
 
     return hashlib.md5(combined_text.encode("utf-8")).hexdigest()
@@ -34,7 +47,7 @@ def database_needs_rebuild():
     if not os.path.exists(HASH_FILE):
         return True
 
-    with open(HASH_FILE, "r") as f:
+    with open(HASH_FILE, "r", encoding="utf-8") as f:
         saved_hash = json.load(f).get("content_hash")
 
     return current_hash != saved_hash
@@ -43,18 +56,21 @@ def database_needs_rebuild():
 def save_content_hash():
     os.makedirs(DB_DIR, exist_ok=True)
 
-    with open(HASH_FILE, "w") as f:
+    with open(HASH_FILE, "w", encoding="utf-8") as f:
         json.dump({"content_hash": calculate_content_hash()}, f)
+
 
 def load_markdown_files():
     documents = []
 
-    for file_path in Path(DATA_DIR).rglob("*.md"):
+    for file_path in sorted(Path(DATA_DIR).rglob("*.md")):
         text = file_path.read_text(encoding="utf-8")
-        documents.append({
-            "text": text,
-            "source": str(file_path)
-        })
+
+        if text.strip():
+            documents.append({
+                "text": text,
+                "source": str(file_path)
+            })
 
     return documents
 
@@ -65,24 +81,24 @@ def chunk_text(text, chunk_size=3000, overlap=300):
 
     while start < len(text):
         end = start + chunk_size
-        chunks.append(text[start:end])
+        chunk = text[start:end].strip()
+
+        if chunk:
+            chunks.append(chunk)
+
         start += chunk_size - overlap
 
     return chunks
 
 
 def get_embedding(text):
-    try:
-        response = gemini_client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=text
-        )
+    response = gemini_client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=text
+    )
 
-        return response.embeddings[0].values
+    return response.embeddings[0].values
 
-    except Exception as e:
-        st.error(f"Embedding error: {e}")
-        raise
 
 def build_vector_database():
     chroma_client = chromadb.PersistentClient(path=DB_DIR)
@@ -91,7 +107,7 @@ def build_vector_database():
         chroma_client.delete_collection(COLLECTION_NAME)
     except Exception:
         pass
-    
+
     collection = chroma_client.create_collection(COLLECTION_NAME)
 
     ids = []
@@ -109,13 +125,18 @@ def build_vector_database():
             embeddings.append(get_embedding(chunk))
             counter += 1
 
+    if counter == 0:
+        raise ValueError("No markdown content found in the data folder.")
+
     collection.add(
         ids=ids,
         documents=texts,
         metadatas=metadatas,
         embeddings=embeddings
     )
+
     save_content_hash()
+
     return f"Knowledge base created with {counter} chunks."
 
 
@@ -125,8 +146,9 @@ def search_knowledge_base(question, n_results=8):
     try:
         collection = chroma_client.get_collection(COLLECTION_NAME)
     except Exception:
-        build_vector_database()
-        collection = chroma_client.get_collection(COLLECTION_NAME)
+        raise ValueError(
+            "Chroma database not found. Run `python rebuild_db.py`, commit the chroma_db folder, and redeploy."
+        )
 
     question_embedding = get_embedding(question)
 
@@ -176,6 +198,7 @@ Answer in a clear, professional style:
     )
 
     return response.text, sources
+
 
 def test_gemini():
     response = gemini_client.models.generate_content(
