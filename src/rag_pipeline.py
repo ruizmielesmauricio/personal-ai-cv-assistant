@@ -5,12 +5,15 @@ from pathlib import Path
 
 import chromadb
 from google import genai
+from sentence_transformers import SentenceTransformer
 
 
 DATA_DIR = "data"
 DB_DIR = "chroma_db"
 COLLECTION_NAME = "mauricio_knowledge_base"
 HASH_FILE = "chroma_db/content_hash.json"
+
+LOCAL_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 def get_api_key():
@@ -29,6 +32,7 @@ if not api_key:
     )
 
 gemini_client = genai.Client(api_key=api_key)
+local_embedding_model = SentenceTransformer(LOCAL_EMBEDDING_MODEL)
 
 
 def calculate_content_hash():
@@ -64,9 +68,9 @@ def load_markdown_files():
     documents = []
 
     for file_path in sorted(Path(DATA_DIR).rglob("*.md")):
-        text = file_path.read_text(encoding="utf-8")
+        text = file_path.read_text(encoding="utf-8").strip()
 
-        if text.strip():
+        if text:
             documents.append({
                 "text": text,
                 "source": str(file_path)
@@ -75,29 +79,16 @@ def load_markdown_files():
     return documents
 
 
-def chunk_text(text, chunk_size=3000, overlap=300):
-    chunks = []
-    start = 0
-
-    while start < len(text):
-        end = start + chunk_size
-        chunk = text[start:end].strip()
-
-        if chunk:
-            chunks.append(chunk)
-
-        start += chunk_size - overlap
-
-    return chunks
-
-
 def get_embedding(text):
-    response = gemini_client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=text
-    )
+    try:
+        response = gemini_client.models.embed_content(
+            model="gemini-embedding-001",
+            contents=text
+        )
+        return response.embeddings[0].values
 
-    return response.embeddings[0].values
+    except Exception:
+        return local_embedding_model.encode(text).tolist()
 
 
 def build_vector_database():
@@ -115,18 +106,16 @@ def build_vector_database():
     metadatas = []
     embeddings = []
 
-    counter = 0
+    documents = load_markdown_files()
 
-    for doc in load_markdown_files():
-        for chunk in chunk_text(doc["text"]):
-            ids.append(f"chunk_{counter}")
-            texts.append(chunk)
-            metadatas.append({"source": doc["source"]})
-            embeddings.append(get_embedding(chunk))
-            counter += 1
+    for counter, doc in enumerate(documents):
+        ids.append(f"doc_{counter}")
+        texts.append(doc["text"])
+        metadatas.append({"source": doc["source"]})
+        embeddings.append(get_embedding(doc["text"]))
 
-    if counter == 0:
-        raise ValueError("No markdown content found in the data folder.")
+    if not ids:
+        raise ValueError("No markdown files found in the data folder.")
 
     collection.add(
         ids=ids,
@@ -137,18 +126,17 @@ def build_vector_database():
 
     save_content_hash()
 
-    return f"Knowledge base created with {counter} chunks."
+    return f"Knowledge base created with {len(ids)} documents."
 
 
-def search_knowledge_base(question, n_results=8):
+def search_knowledge_base(question, n_results=6):
     chroma_client = chromadb.PersistentClient(path=DB_DIR)
 
     try:
         collection = chroma_client.get_collection(COLLECTION_NAME)
     except Exception:
-        raise ValueError(
-            "Chroma database not found. Run `python rebuild_db.py`, commit the chroma_db folder, and redeploy."
-        )
+        build_vector_database()
+        collection = chroma_client.get_collection(COLLECTION_NAME)
 
     question_embedding = get_embedding(question)
 
