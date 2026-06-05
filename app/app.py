@@ -12,15 +12,8 @@ sys.path.append(str(ROOT_DIR))
 
 import streamlit as st
 
-from src.rag_pipeline import (
-    build_vector_database,
-    database_needs_rebuild,
-    generate_answer
-)
+from src.rag_pipeline import generate_answer
 
-from src.rag_pipeline import test_gemini
-
-st.write(test_gemini())
 
 st.set_page_config(
     page_title="Mauricio AI CV Assistant",
@@ -32,11 +25,6 @@ st.title("Mauricio Ruiz — AI CV & Portfolio Assistant")
 st.write(
     "Ask questions about my experience, skills, projects, education, and portfolio."
 )
-
-if database_needs_rebuild():
-    with st.spinner("Updating knowledge base..."):
-        message = build_vector_database()
-        st.success(message)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
