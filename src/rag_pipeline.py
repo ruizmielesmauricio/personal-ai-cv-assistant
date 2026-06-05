@@ -1,8 +1,12 @@
+import hashlib
+import json
+import os
 from pathlib import Path
 
 import chromadb
 import streamlit as st
 from google import genai
+
 
 
 DATA_DIR = "data"
@@ -12,6 +16,35 @@ COLLECTION_NAME = "mauricio_knowledge_base"
 
 gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
 
+HASH_FILE = "chroma_db/content_hash.json"
+
+
+def calculate_content_hash():
+    combined_text = ""
+
+    for file_path in sorted(Path(DATA_DIR).rglob("*.md")):
+        combined_text += file_path.read_text(encoding="utf-8")
+
+    return hashlib.md5(combined_text.encode("utf-8")).hexdigest()
+
+
+def database_needs_rebuild():
+    current_hash = calculate_content_hash()
+
+    if not os.path.exists(HASH_FILE):
+        return True
+
+    with open(HASH_FILE, "r") as f:
+        saved_hash = json.load(f).get("content_hash")
+
+    return current_hash != saved_hash
+
+
+def save_content_hash():
+    os.makedirs(DB_DIR, exist_ok=True)
+
+    with open(HASH_FILE, "w") as f:
+        json.dump({"content_hash": calculate_content_hash()}, f)
 
 def load_markdown_files():
     documents = []
@@ -52,7 +85,7 @@ def build_vector_database():
         chroma_client.delete_collection(COLLECTION_NAME)
     except Exception:
         pass
-
+    
     collection = chroma_client.create_collection(COLLECTION_NAME)
 
     ids = []
@@ -76,7 +109,7 @@ def build_vector_database():
         metadatas=metadatas,
         embeddings=embeddings
     )
-
+    save_content_hash()
     return f"Knowledge base created with {counter} chunks."
 
 
