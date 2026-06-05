@@ -59,7 +59,7 @@ def load_markdown_files():
     return documents
 
 
-def chunk_text(text, chunk_size=1400, overlap=250):
+def chunk_text(text, chunk_size=3000, overlap=300):
     chunks = []
     start = 0
 
