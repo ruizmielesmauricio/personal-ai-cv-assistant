@@ -28,10 +28,11 @@ api_key = get_api_key()
 
 if not api_key:
     raise ValueError(
-        "GEMINI_API_KEY not found. Add it to Streamlit secrets or as an environment variable."
+        "GEMINI_API_KEY not found. Add it to Streamlit secrets or environment variables."
     )
 
 gemini_client = genai.Client(api_key=api_key)
+
 local_embedding_model = SentenceTransformer(LOCAL_EMBEDDING_MODEL)
 
 
@@ -80,15 +81,7 @@ def load_markdown_files():
 
 
 def get_embedding(text):
-    try:
-        response = gemini_client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=text
-        )
-        return response.embeddings[0].values
-
-    except Exception:
-        return local_embedding_model.encode(text).tolist()
+    return local_embedding_model.encode(text).tolist()
 
 
 def build_vector_database():
@@ -129,7 +122,7 @@ def build_vector_database():
     return f"Knowledge base created with {len(ids)} documents."
 
 
-def search_knowledge_base(question, n_results=6):
+def search_knowledge_base(question, n_results=3):
     chroma_client = chromadb.PersistentClient(path=DB_DIR)
 
     try:
@@ -180,12 +173,24 @@ Question:
 Answer in a clear, professional style:
 """
 
-    response = gemini_client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt
-    )
+    try:
+        response = gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
 
-    return response.text, sources
+        return response.text, sources
+
+    except Exception as e:
+        fallback_answer = f"""
+Sorry, I could not generate an AI response at the moment.
+
+This is likely due to a temporary Gemini API limit, quota issue, or service error.
+
+Technical error:
+{e}
+"""
+        return fallback_answer, sources
 
 
 def test_gemini():
