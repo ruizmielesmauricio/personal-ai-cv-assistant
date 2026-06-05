@@ -1,121 +1,199 @@
-
 # Death Discography Dashboard
 
-<img width="2852" height="1734" alt="image" src="https://github.com/user-attachments/assets/25eb75ba-275a-4159-a942-f9ab3dc74d12" />
+## Project Overview
 
+The Death Discography Dashboard is an interactive analytics application built using Streamlit that explores the complete studio discography of the influential death metal band Death.
 
-## [Dashboard](https://deathdiscography-h9p46woir6f86utjcw2ikh.streamlit.app)
+The project combines music metadata from multiple APIs and transforms it into a user-friendly dashboard for exploring albums, songs, tempo characteristics, popularity metrics, and listening trends.
 
-An interactive Streamlit dashboard analyzing the discography of the band Death.
+This project was designed to demonstrate end-to-end data analytics skills including data collection, API integration, data cleaning, feature engineering, dashboard development, and deployment.
 
-## Features
+---
 
-- Official studio album exploration
-- Track-level analytics
-- BPM analysis
-- Listener and playcount metrics from Last.fm
-- Album comparison tool
-- Interactive filtering
-- Album artwork visualization
+## Business Objective
 
-## Dashboard Sections
-- Band overview
-- Album timeline
-- BPM distribution
-- Top tracks
-- Album comparison
-- Track explorer
+The goal of the project was to create a fully interactive dashboard that allows users to:
 
+- Explore Death's studio albums
+- Analyze song tempo (BPM)
+- Compare albums
+- Identify the most popular tracks
+- Investigate listener behaviour and streaming popularity
+
+The project simulates a real-world analytics workflow where data from multiple sources must be combined and transformed into meaningful insights.
+
+---
 
 ## Data Sources
 
-- Spotify API
-- Last.fm API
-- MusicBrainz / AcousticBrainz
+The dashboard integrates data from multiple public APIs:
 
-## Tech Stack
+### Spotify API
+Used to collect:
 
-- Python
-- Pandas
-- Streamlit
-- Plotly
-# Death Discography Dashboard
+- Album information
+- Track metadata
+- Track duration
+- Popularity scores
 
-## Project Summary
+### Last.fm API
+Used to collect:
 
-Built an interactive analytics dashboard exploring the complete studio discography of the band Death. The project combines music metadata, popularity metrics, and musical characteristics to allow fans to explore albums and tracks through an interactive web application.
+- Listener counts
+- Play counts
+- Audience engagement metrics
 
-## Business Problem
+### MusicBrainz / AcousticBrainz
+Used to enrich songs with:
 
-Music data is distributed across multiple platforms and difficult to analyse collectively. The objective was to consolidate multiple music datasets into a single analytical platform that allows users to compare albums, tracks, popularity, and musical characteristics.
+- BPM information
+- Audio characteristics
 
-## Data Sources
+---
 
-- Spotify API
-- Last.fm API
-- MusicBrainz
-- AcousticBrainz
+## Methodology
 
-## Data Engineering
+### Data Collection
 
-### Extraction
+Data was extracted using Python API calls and merged into a unified dataset.
 
-Collected album and track information from MusicBrainz and enriched records using Last.fm and Spotify-based sources.
+The workflow included:
 
-### Transformation
+1. Retrieve all official studio albums.
+2. Retrieve every track from each album.
+3. Collect popularity metrics.
+4. Collect BPM data.
+5. Merge datasets.
+6. Validate and clean records.
 
-- Removed duplicate tracks
-- Filtered non-studio releases
-- Standardised popularity metrics
-- Joined datasets from multiple APIs
+---
 
-### Loading
+### Data Cleaning
 
-Created a consolidated dataset used by Streamlit and Plotly visualisations.
+Several preprocessing steps were performed:
 
-## Technologies
+- Duplicate removal
+- Missing value handling
+- Type conversion
+- Standardisation of album and track names
+- BPM validation
 
-- Python
-- Pandas
-- Streamlit
-- Plotly
+---
+
+### Feature Engineering
+
+Additional metrics were created including:
+
+- Track length in minutes
+- Album release chronology
+- Average BPM per album
+- Most listened tracks
+- Most popular tracks
+- Fastest songs
+- Slowest songs
+
+---
 
 ## Dashboard Features
 
-- Album exploration
-- Track-level analysis
-- BPM analysis
-- Listener trends
-- Popularity comparison
+### Band Overview
 
-## Key Challenges
+Displays:
 
-- Matching tracks across APIs
-- Inconsistent naming conventions
-- Missing BPM information
+- Number of albums
+- Number of tracks
+- Average BPM
+- Most popular track
+- Fastest song
+- Slowest song
 
-## Results
+---
 
-- Interactive web application deployed publicly
-- Unified music dataset
-- Track-level and album-level analytics
+### Album Timeline
+
+Interactive visualization showing:
+
+- Album release sequence
+- Discography progression
+
+---
+
+### BPM Analysis
+
+Users can:
+
+- Explore BPM distributions
+- Compare album tempo profiles
+- Identify the fastest and slowest compositions
+
+---
+
+### Top Tracks Analysis
+
+Displays:
+
+- Most played tracks
+- Most listened songs
+- Popularity rankings
+
+---
+
+### Album Comparison Tool
+
+Allows users to compare:
+
+- Average BPM
+- Track counts
+- Popularity metrics
+- Listener engagement
+
+---
+
+### Interactive Filtering
+
+Users can dynamically filter data by:
+
+- Album
+- Song
+- BPM ranges
+
+---
+
+## Technologies Used
+
+- Python
+- Pandas
+- Streamlit
+- Plotly
+- Spotify API
+- Last.fm API
+- MusicBrainz API
+- AcousticBrainz API
+
+---
+
+## Deployment
+
+The dashboard was deployed using Streamlit Community Cloud, making it publicly accessible through a web browser without requiring local installation.
+
+---
 
 ## Skills Demonstrated
 
+This project demonstrates:
+
+- Data Collection
 - API Integration
 - Data Cleaning
-- ETL Pipelines
-- Dashboard Development
+- Feature Engineering
 - Data Visualisation
-- Python Development
+- Dashboard Development
+- Streamlit Deployment
+- Analytical Storytelling
+- User Experience Design
 
-## Run Locally
+---
 
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
-## Author
-**_Mauricio Ruiz_**
+## Outcome
 
-
+The final solution transformed raw music metadata into an interactive analytics platform that allows users to explore over three decades of Death's discography through data-driven insights and visualisations.
