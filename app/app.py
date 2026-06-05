@@ -1,7 +1,3 @@
-from src.rag_pipeline import test_gemini
-
-st.write(test_gemini())
-
 import sys
 from pathlib import Path
 
@@ -21,6 +17,10 @@ from src.rag_pipeline import (
     database_needs_rebuild,
     generate_answer
 )
+
+from src.rag_pipeline import test_gemini
+
+st.write(test_gemini())
 
 st.set_page_config(
     page_title="Mauricio AI CV Assistant",
