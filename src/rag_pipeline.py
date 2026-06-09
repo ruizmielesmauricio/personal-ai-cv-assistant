@@ -5,6 +5,7 @@ from pathlib import Path
 
 import chromadb
 from google import genai
+from groq import Groq
 from sentence_transformers import SentenceTransformer
 
 
@@ -16,22 +17,24 @@ HASH_FILE = "chroma_db/content_hash.json"
 LOCAL_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
-def get_api_key():
+def get_secret_or_env(key):
     try:
         import streamlit as st
-        return st.secrets["GEMINI_API_KEY"]
+        return st.secrets[key]
     except Exception:
-        return os.getenv("GEMINI_API_KEY")
+        return os.getenv(key)
 
 
-api_key = get_api_key()
+gemini_api_key = get_secret_or_env("GEMINI_API_KEY")
+groq_api_key = get_secret_or_env("GROQ_API_KEY")
 
-if not api_key:
+if not gemini_api_key:
     raise ValueError(
         "GEMINI_API_KEY not found. Add it to Streamlit secrets or environment variables."
     )
 
-gemini_client = genai.Client(api_key=api_key)
+gemini_client = genai.Client(api_key=gemini_api_key)
+groq_client = Groq(api_key=groq_api_key) if groq_api_key else None
 
 local_embedding_model = SentenceTransformer(LOCAL_EMBEDDING_MODEL)
 
@@ -141,15 +144,8 @@ def search_knowledge_base(question, n_results=3):
     return results
 
 
-def generate_answer(question):
-    results = search_knowledge_base(question)
-
-    chunks = results["documents"][0]
-    sources = results["metadatas"][0]
-
-    context = "\n\n".join(chunks)
-
-    prompt = f"""
+def build_prompt(question, context):
+    return f"""
 You are Mauricio Ruiz's AI CV and portfolio assistant.
 
 Your job is to answer like a strong career portfolio assistant.
@@ -173,24 +169,90 @@ Question:
 Answer in a clear, professional style:
 """
 
-    try:
-        response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
 
-        return response.text, sources
+def generate_with_gemini(prompt):
+    response = gemini_client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt
+    )
 
-    except Exception as e:
-        fallback_answer = f"""
-Sorry, I could not generate an AI response at the moment.
+    return response.text
 
-This is likely due to a temporary Gemini API limit, quota issue, or service error.
 
-Technical error:
-{e}
+def generate_with_groq(prompt):
+    if not groq_client:
+        raise ValueError("GROQ_API_KEY not found. Groq fallback is unavailable.")
+
+    response = groq_client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are Mauricio Ruiz's AI CV and portfolio assistant. "
+                    "Answer professionally using only the provided context. "
+                    "Do not invent information."
+                )
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ],
+        temperature=0.2,
+        max_tokens=700
+    )
+
+    return response.choices[0].message.content
+
+
+def generate_context_fallback(context, gemini_error=None, groq_error=None):
+    technical_details = ""
+
+    if gemini_error:
+        technical_details += f"\nGemini error: {gemini_error}"
+
+    if groq_error:
+        technical_details += f"\nGroq error: {groq_error}"
+
+    return f"""
+I could not generate a polished AI response at the moment, but the portfolio search worked.
+
+Here is the most relevant information found in Mauricio's portfolio database:
+
+{context}
+
+Technical details:
+{technical_details}
 """
-        return fallback_answer, sources
+
+
+def generate_answer(question):
+    results = search_knowledge_base(question)
+
+    chunks = results["documents"][0]
+    sources = results["metadatas"][0]
+
+    context = "\n\n".join(chunks)
+    prompt = build_prompt(question, context)
+
+    try:
+        answer = generate_with_gemini(prompt)
+        return answer, sources
+
+    except Exception as gemini_error:
+        try:
+            answer = generate_with_groq(prompt)
+            return answer, sources
+
+        except Exception as groq_error:
+            fallback_answer = generate_context_fallback(
+                context=context,
+                gemini_error=gemini_error,
+                groq_error=groq_error
+            )
+
+            return fallback_answer, sources
 
 
 def test_gemini():
